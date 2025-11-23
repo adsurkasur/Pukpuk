@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useId, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
@@ -35,11 +35,36 @@ interface ChoroplethMapProps {
 }
 
 export default function ChoroplethMap({ geoJsonData, data, mode, onRegionClick }: ChoroplethMapProps) {
-  const mapId = useId();
+  const mapRef = useRef<L.Map | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [isClient, setIsClient] = useState(false);
+  const [mapKey, setMapKey] = useState(0);
 
+  // Ensure client-side rendering
   useEffect(() => {
     setIsClient(true);
+  }, []);
+
+  // Force re-mount when critical props change
+  useEffect(() => {
+    if (geoJsonData && isClient) {
+      // Clean up existing map before creating new one
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
+      setMapKey(prev => prev + 1);
+    }
+  }, [geoJsonData, mode, isClient]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
+    };
   }, []);
 
   // Color scale based on data values
@@ -91,26 +116,39 @@ export default function ChoroplethMap({ geoJsonData, data, mode, onRegionClick }
   };
 
   return (
-    <div className="w-full h-96 rounded-lg overflow-hidden border">
-      {isClient && (
+    <div ref={containerRef} className="w-full h-96 rounded-lg overflow-hidden border">
+      {isClient && geoJsonData && (
         <MapContainer
+          key={mapKey}
           center={[-6.2, 106.816666]} // Jakarta coordinates
           zoom={8}
           style={{ height: '100%', width: '100%' }}
-          key={`map-${mapId}-${JSON.stringify(data)}`}
+          whenReady={() => {
+            // Map is ready - this callback ensures we don't double-initialize
+            console.log('Map initialized successfully');
+          }}
+          ref={(mapInstance) => {
+            // Only set the ref if it's not already set and we have a valid instance
+            if (mapInstance && !mapRef.current) {
+              mapRef.current = mapInstance;
+            }
+          }}
         >
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
-          {geoJsonData && (
-            <GeoJSON
-              data={geoJsonData}
-              style={style}
-              onEachFeature={onEachFeature}
-            />
-          )}
+          <GeoJSON
+            data={geoJsonData}
+            style={style}
+            onEachFeature={onEachFeature}
+          />
         </MapContainer>
+      )}
+      {isClient && !geoJsonData && (
+        <div className="w-full h-full flex items-center justify-center bg-gray-100">
+          <p className="text-gray-500">Loading map data...</p>
+        </div>
       )}
     </div>
   );
