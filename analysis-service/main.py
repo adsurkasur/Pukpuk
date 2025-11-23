@@ -18,6 +18,8 @@ from contextlib import asynccontextmanager
 # Import our custom modules
 from models.forecast_models import ForecastEngine
 from models.data_processor import DataProcessor
+from models.routing_optimizer import RouteOptimizer
+from models.compliance_monitor import ComplianceMonitor
 from utils.config import settings
 from utils.logger import setup_logger
 
@@ -36,7 +38,11 @@ async def lifespan(app: FastAPI):
         yield
     except Exception as e:
         logger.error(f"Error during startup: {e}")
-        raise
+        logger.error(f"Exception type: {type(e).__name__}")
+        import traceback
+        logger.error(f"Traceback: {traceback.format_exc()}")
+        # Don't re-raise the exception to prevent server shutdown
+        yield
     finally:
         # Shutdown
         logger.info("Shutting down Pukpuk Analysis Service")
@@ -80,6 +86,7 @@ class ForecastRequest(BaseModel):
     models: Optional[List[str]] = Field(["ensemble"], description="Models to use for forecasting")
     include_confidence: Optional[bool] = Field(True, description="Include confidence intervals")
     scenario: Optional[str] = Field("realistic", description="Forecast scenario")
+    location: Optional[Dict[str, float]] = Field(None, description="Location coordinates {'lat': float, 'lng': float} for NDVI data")
 
 class ForecastDataPoint(BaseModel):
     date: str = Field(..., description="Forecast date")
@@ -98,6 +105,60 @@ class RevenueProjection(BaseModel):
 
 class ForecastResponse(BaseModel):
     forecast_data: List[ForecastDataPoint] = Field(..., description="Forecast data points")
+    revenue_projection: Optional[List[RevenueProjection]] = Field(None, description="Revenue projections")
+    models_used: List[str] = Field(..., description="ML models used for forecasting")
+    summary: str = Field(..., description="AI-generated summary of forecast")
+    confidence: float = Field(..., description="Overall forecast confidence score")
+    scenario: Optional[str] = Field(None, description="Forecast scenario used")
+    metadata: Dict[str, Any] = Field(..., description="Additional forecast metadata")
+
+class RouteOptimizationRequest(BaseModel):
+    warehouse_location: Dict[str, float] = Field(..., description="Warehouse coordinates {'lat': float, 'lng': float}")
+    delivery_points: List[Dict[str, Any]] = Field(..., description="List of delivery points with coordinates and demands")
+    vehicle_capacity: float = Field(..., description="Vehicle capacity in tons")
+    vehicle_count: int = Field(1, description="Number of vehicles available")
+    optimization_goal: str = Field("distance", description="Optimization goal: 'distance', 'time', 'cost', 'emissions'")
+
+class RouteStop(BaseModel):
+    location_id: str = Field(..., description="Location identifier")
+    coordinates: Dict[str, float] = Field(..., description="Coordinates {'lat': float, 'lng': float}")
+    demand: float = Field(..., description="Demand at this location")
+    arrival_time: Optional[str] = Field(None, description="Estimated arrival time")
+    departure_time: Optional[str] = Field(None, description="Estimated departure time")
+
+class Route(BaseModel):
+    vehicle_id: int = Field(..., description="Vehicle identifier")
+    stops: List[RouteStop] = Field(..., description="Ordered list of stops")
+    total_distance: float = Field(..., description="Total route distance in km")
+    total_time: float = Field(..., description="Total route time in hours")
+    total_cost: float = Field(..., description="Total route cost")
+    emissions: float = Field(..., description="CO2 emissions in kg")
+
+class RouteOptimizationResponse(BaseModel):
+    routes: List[Route] = Field(..., description="Optimized routes for all vehicles")
+    total_distance: float = Field(..., description="Total distance across all routes")
+    total_cost: float = Field(..., description="Total cost across all routes")
+    total_emissions: float = Field(..., description="Total CO2 emissions across all routes")
+    optimization_summary: str = Field(..., description="Summary of optimization results")
+
+class ComplianceCheckRequest(BaseModel):
+    kiosk_id: str = Field(..., description="Kiosk identifier")
+    farmer_phone: str = Field(..., description="Farmer's WhatsApp number with country code")
+    transaction_details: Dict[str, Any] = Field(..., description="Transaction details")
+    het_price: float = Field(..., description="Maximum retail price (HET)")
+
+class ComplianceCheckResponse(BaseModel):
+    verification_sent: bool = Field(..., description="Whether verification was sent")
+    transaction_parsed: bool = Field(..., description="Whether transaction was parsed successfully")
+    parsed_transaction: Optional[Dict[str, Any]] = Field(None, description="Parsed transaction data")
+    status: str = Field(..., description="Check status")
+
+class ChatParseRequest(BaseModel):
+    chat_message: str = Field(..., description="Raw chat message from kiosk")
+
+class ChatParseResponse(BaseModel):
+    parsed: bool = Field(..., description="Whether parsing was successful")
+    transaction_data: Optional[Dict[str, Any]] = Field(None, description="Parsed transaction data")
     revenue_projection: Optional[List[RevenueProjection]] = Field(None, description="Revenue projections")
     models_used: List[str] = Field(..., description="Models used in forecasting")
     summary: str = Field(..., description="AI-generated summary in Markdown")
@@ -186,6 +247,18 @@ async def generate_forecast(
         df = data_processor.process_historical_data(request.historical_data)
         validate_historical_data(df)
 
+        # Fetch NDVI data if location provided
+        if request.location:
+            start_date = df['date'].min().strftime('%Y-%m-%d')
+            end_date = (df['date'].max() + timedelta(days=request.days)).strftime('%Y-%m-%d')
+            ndvi_df = data_processor.fetch_ndvi_data(
+                lat=request.location['lat'],
+                lng=request.location['lng'],
+                start_date=start_date,
+                end_date=end_date
+            )
+            df = data_processor.merge_ndvi_with_demand(df, ndvi_df)
+
         # Generate forecast
         forecast_result = await forecast_engine.generate_forecast(
             df=df,
@@ -230,6 +303,155 @@ async def generate_forecast(
         raise HTTPException(
             status_code=500,
             detail=f"Forecast generation failed: {str(e)}"
+        )
+
+@app.post("/optimize-route", response_model=RouteOptimizationResponse)
+async def optimize_delivery_route(request: RouteOptimizationRequest):
+    """Optimize delivery routes using Vehicle Routing Problem solver"""
+    try:
+        logger.info("Starting route optimization")
+
+        # Initialize route optimizer
+        optimizer = RouteOptimizer()
+
+        # Convert request data to Location objects
+        warehouse = Location(
+            id="warehouse",
+            lat=request.warehouse_location["lat"],
+            lng=request.warehouse_location["lng"],
+            demand=0
+        )
+
+        delivery_locations = []
+        for point in request.delivery_points:
+            delivery_locations.append(Location(
+                id=point.get("id", f"point_{len(delivery_locations)}"),
+                lat=point["coordinates"]["lat"],
+                lng=point["coordinates"]["lng"],
+                demand=point.get("demand", 0)
+            ))
+
+        # Optimize routes
+        routes = optimizer.optimize_routes(
+            warehouse=warehouse,
+            delivery_points=delivery_locations,
+            vehicle_capacity=request.vehicle_capacity,
+            vehicle_count=request.vehicle_count,
+            optimization_goal=request.optimization_goal
+        )
+
+        # Convert to response format
+        response_routes = []
+        total_distance = 0
+        total_cost = 0
+        total_emissions = 0
+
+        for route in routes:
+            stops = []
+            for stop in route.stops:
+                stops.append(RouteStop(
+                    location_id=stop.id,
+                    coordinates={"lat": stop.lat, "lng": stop.lng},
+                    demand=stop.demand
+                ))
+
+            response_routes.append(Route(
+                vehicle_id=route.vehicle_id,
+                stops=stops,
+                total_distance=round(route.total_distance, 2),
+                total_time=round(route.total_time, 2),
+                total_cost=round(route.total_cost, 2),
+                emissions=round(route.emissions, 2)
+            ))
+
+            total_distance += route.total_distance
+            total_cost += route.total_cost
+            total_emissions += route.emissions
+
+        optimization_summary = f"Optimized {len(response_routes)} routes for {len(delivery_locations)} delivery points. " \
+                              f"Total distance: {round(total_distance, 2)} km, " \
+                              f"Total cost: IDR {round(total_cost, 2)}, " \
+                              f"Total emissions: {round(total_emissions, 2)} kg CO2"
+
+        response = RouteOptimizationResponse(
+            routes=response_routes,
+            total_distance=round(total_distance, 2),
+            total_cost=round(total_cost, 2),
+            total_emissions=round(total_emissions, 2),
+            optimization_summary=optimization_summary
+        )
+
+        logger.info("Route optimization completed successfully")
+        return response
+
+    except Exception as e:
+        logger.error(f"Route optimization failed: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Route optimization failed: {str(e)}"
+        )
+
+@app.post("/compliance-check", response_model=ComplianceCheckResponse)
+async def check_compliance(request: ComplianceCheckRequest):
+    """Send compliance verification via WhatsApp"""
+    try:
+        logger.info(f"Processing compliance check for kiosk {request.kiosk_id}")
+
+        monitor = ComplianceMonitor()
+
+        # Parse transaction if not already parsed
+        parsed_transaction = request.transaction_details
+        transaction_parsed = True
+
+        # Send verification
+        verification_sent = monitor.send_verification_request(
+            farmer_phone=request.farmer_phone,
+            kiosk_name=request.kiosk_id,
+            transaction_details={
+                **parsed_transaction,
+                'het_price': request.het_price
+            }
+        )
+
+        response = ComplianceCheckResponse(
+            verification_sent=verification_sent,
+            transaction_parsed=transaction_parsed,
+            parsed_transaction=parsed_transaction,
+            status="verification_sent" if verification_sent else "failed"
+        )
+
+        logger.info(f"Compliance check completed: {response.status}")
+        return response
+
+    except Exception as e:
+        logger.error(f"Compliance check failed: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Compliance check failed: {str(e)}"
+        )
+
+@app.post("/parse-chat", response_model=ChatParseResponse)
+async def parse_chat_message(request: ChatParseRequest):
+    """Parse transaction details from kiosk chat message"""
+    try:
+        logger.info("Parsing chat message for transaction data")
+
+        monitor = ComplianceMonitor()
+        transaction_data = monitor.parse_chat_transaction(request.chat_message)
+
+        response = ChatParseResponse(
+            parsed=transaction_data is not None,
+            transaction_data=transaction_data
+        )
+
+        logger.info(f"Chat parsing completed: {'success' if response.parsed else 'failed'}")
+        return response
+
+    except Exception as e:
+        logger.error(f"Chat parsing failed: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Chat parsing failed: {str(e)}"
         )
 
 @app.get("/models")
@@ -290,13 +512,4 @@ async def general_exception_handler(request, exc):
     return JSONResponse(
         status_code=500,
         content={"detail": "Internal server error"}
-    )
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(
-        "main:app",
-        host="0.0.0.0",
-        port=int(os.getenv("PORT", 8000)),  # Use 8000 for ElysiaJS integration
-        reload=True
     )

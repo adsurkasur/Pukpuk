@@ -26,14 +26,10 @@ def run_service():
     env["PYTHONPATH"] = str(Path(__file__).parent)
     env["PORT"] = "8000"  # Match ElysiaJS configuration
 
-    # Run uvicorn in the foreground using venv Python
-    subprocess.run([
-        sys.executable,
-        "-m", "uvicorn",
-        "main:app",
-        "--host", "0.0.0.0",
-        "--port", "8000"
-    ], env=env)
+    # Import and run directly
+    from main import app
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
 
 def train_model():
     """Train the CatBoost model with artificial data"""

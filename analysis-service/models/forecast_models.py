@@ -358,7 +358,7 @@ class ForecastEngine:
         days: int,
         include_confidence: bool = True
     ) -> ForecastResult:
-        """CatBoost forecast (placeholder for future training)"""
+        """CatBoost forecast with NDVI integration"""
         try:
             # Lazy import CatBoost
             _import_catboost()
@@ -369,24 +369,89 @@ class ForecastEngine:
             if len(df) < 10:
                 raise ValueError("Insufficient data for CatBoost")
 
-            # For now, use a simple fallback since model isn't trained yet
-            # This will be replaced with actual trained model later
-            self.logger.info("Using CatBoost placeholder (model not trained yet)")
+            self.logger.info("Generating CatBoost forecast with NDVI integration")
 
-            # Simple trend-based forecast as placeholder
-            recent_trend = df['price'].pct_change().mean()
-            last_price = df['price'].iloc[-1]
+            # Prepare features for CatBoost
+            feature_df = df.copy()
 
+            # Add NDVI as a feature if available
+            if 'ndvi' in feature_df.columns:
+                self.logger.info("Using NDVI data in CatBoost forecast")
+                # NDVI is a leading indicator - shift it forward to predict future demand
+                feature_df['ndvi_leading'] = feature_df['ndvi'].shift(-7)  # 7-day lead time
+                feature_df['ndvi_trend'] = feature_df['ndvi'].rolling(7).mean()
+            else:
+                self.logger.info("No NDVI data available, using price-based features only")
+
+            # Create categorical features
+            feature_df['month'] = feature_df['date'].dt.month
+            feature_df['day_of_week'] = feature_df['date'].dt.dayofweek
+            feature_df['season'] = pd.cut(feature_df['date'].dt.month,
+                                        bins=[0, 3, 6, 9, 12],
+                                        labels=['Q1', 'Q2', 'Q3', 'Q4'])
+
+            # Select features for training
+            feature_cols = ['price', 'month', 'day_of_week', 'season']
+            if 'ndvi' in feature_df.columns:
+                feature_cols.extend(['ndvi', 'ndvi_leading', 'ndvi_trend'])
+
+            # Prepare training data
+            train_df = feature_df[feature_cols + ['quantity']].dropna()
+
+            if len(train_df) < 5:
+                raise ValueError("Insufficient training data after feature engineering")
+
+            X = train_df[feature_cols]
+            y = train_df['quantity']
+
+            # Convert categorical columns
+            cat_features = ['season']
+            if 'season' in X.columns:
+                X['season'] = X['season'].astype(str)
+
+            # Train CatBoost model
+            model = CatBoostRegressor(
+                iterations=100,
+                learning_rate=0.1,
+                depth=6,
+                verbose=False,
+                cat_features=cat_features if cat_features else None
+            )
+
+            model.fit(X, y)
+
+            # Generate forecast
+            last_features = X.iloc[-1:].copy()
+
+            # Update date-based features for future dates
             values = []
             for i in range(days):
-                trend_factor = 1 + (recent_trend * (i + 1) / days)
-                predicted_price = last_price * trend_factor
-                values.append(float(predicted_price))
+                # Update seasonal features
+                future_date = df['date'].max() + pd.Timedelta(days=i+1)
+                last_features['month'] = future_date.month
+                last_features['day_of_week'] = future_date.dayofweek
+                last_features['season'] = pd.cut([future_date.month], bins=[0, 3, 6, 9, 12],
+                                               labels=['Q1', 'Q2', 'Q3', 'Q4'])[0]
 
-            # Simple confidence intervals
-            std_dev = df['price'].std()
-            confidence_lower = [v - std_dev for v in values] if include_confidence else None
-            confidence_upper = [v + std_dev for v in values] if include_confidence else None
+                # Update NDVI if available (use recent trend)
+                if 'ndvi' in feature_df.columns:
+                    recent_ndvi = feature_df['ndvi'].tail(7).mean()
+                    last_features['ndvi'] = recent_ndvi
+                    last_features['ndvi_leading'] = recent_ndvi
+                    last_features['ndvi_trend'] = recent_ndvi
+
+                # Make prediction
+                pred = model.predict(last_features)[0]
+                values.append(float(max(0, pred)))  # Ensure non-negative
+
+            # Simple confidence intervals based on historical variance
+            if include_confidence and len(y) > 1:
+                std_dev = y.std()
+                confidence_lower = [max(0, v - std_dev) for v in values]
+                confidence_upper = [v + std_dev for v in values]
+            else:
+                confidence_lower = None
+                confidence_upper = None
 
             return ForecastResult(
                 values=values,

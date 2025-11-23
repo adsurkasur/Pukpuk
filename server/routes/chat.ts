@@ -1,6 +1,11 @@
 import { Elysia, t } from 'elysia'
+import { GoogleGenerativeAI } from '@google/generative-ai'
 
 const PYTHON_SERVICE_URL = process.env.PYTHON_SERVICE_URL || 'http://localhost:8000'
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY
+
+// Initialize Gemini AI
+const genAI = GEMINI_API_KEY ? new GoogleGenerativeAI(GEMINI_API_KEY) : null
 
 // Mock chat history store - in production, this would be persistent
 let chatHistory: any[] = []
@@ -10,11 +15,36 @@ export const chatRoutes = new Elysia({ prefix: '/api/chat' })
     try {
       const { message, context, conversationId } = body
 
-      // For now, we'll create a simple response
-      // In production, this could proxy to a Python AI service or external API
+      let aiResponse = 'I apologize, but AI services are not configured.'
+
+      if (genAI) {
+        const model = genAI.getGenerativeModel({ model: 'gemini-pro' })
+
+        // Create agentic prompt with tool capabilities
+        const systemPrompt = `You are PUKPUK, an intelligent agricultural supply chain assistant. You have access to various tools and can perform actions like:
+- Forecasting fertilizer demand
+- Checking inventory levels
+- Optimizing delivery routes
+- Generating reports
+- Providing compliance information
+
+When users ask you to perform tasks, respond helpfully and offer to execute actions. Be conversational but professional.
+
+User message: ${message}
+Context: ${JSON.stringify(context || {})}
+
+Respond as an agentic AI that can take actions.`
+
+        const result = await model.generateContent(systemPrompt)
+        aiResponse = result.response.text()
+      } else {
+        // Fallback response
+        aiResponse = `I understand you want to: ${message}. As PUKPUK AI, I can help with fertilizer supply chain management, demand forecasting, and compliance monitoring.`
+      }
+
       const response = {
         id: `msg-${Date.now()}`,
-        message: `I understand you want to: ${message}. This is a placeholder response from the ElysiaJS API layer.`,
+        message: aiResponse,
         timestamp: new Date().toISOString(),
         conversationId: conversationId || `conv-${Date.now()}`
       }

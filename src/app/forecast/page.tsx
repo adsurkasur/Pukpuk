@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import { AdvancedForecastControls } from "@/components/feature/forecast/controls";
 import { EnhancedDemandChart } from "@/components/feature/forecast/enhanced-demand-chart";
 import { ExportCapabilities } from "@/components/feature/forecast/export";
@@ -11,6 +12,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MarkdownRenderer } from "@/components/common/MarkdownRenderer";
 import { Loader2, BarChart3, TrendingUp, Target, Brain, Activity } from "lucide-react";
+
+// Dynamically import ChoroplethMap to avoid SSR issues with Leaflet
+const ChoroplethMap = dynamic(() => import("@/components/feature/forecast/ChoroplethMap"), {
+  ssr: false,
+  loading: () => <div className="h-96 flex items-center justify-center">Loading map...</div>
+});
 
 export default function ForecastPage() {
   const [forecastData, setForecastData] = useState<ForecastResponse | null>(null);
@@ -76,8 +83,9 @@ export default function ForecastPage() {
         {/* Enhanced Results Dashboard */}
         {forecastData && (
           <Tabs defaultValue="summary" className="w-full">
-            <TabsList className="grid w-full grid-cols-7">
+            <TabsList className="grid w-full grid-cols-8">
               <TabsTrigger value="summary">Summary</TabsTrigger>
+              <TabsTrigger value="map">Map</TabsTrigger>
               <TabsTrigger value="revenue">Revenue</TabsTrigger>
               <TabsTrigger value="models">Models</TabsTrigger>
               <TabsTrigger value="insights">Insights</TabsTrigger>
@@ -102,6 +110,25 @@ export default function ForecastPage() {
                 </CardHeader>
                 <CardContent>
                   <MarkdownRenderer content={forecastData.summary} />
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="map" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Choropleth Map</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-sm text-muted-foreground mb-4">
+                    Visualize stock levels and forecast demand across regions
+                  </div>
+                  <ChoroplethMap
+                    geoJsonData={null} // TODO: Load actual geo data
+                    data={{}} // TODO: Load actual stock/forecast data
+                    mode="stock"
+                    onRegionClick={(regionId) => console.log('Region clicked:', regionId)}
+                  />
                 </CardContent>
               </Card>
             </TabsContent>

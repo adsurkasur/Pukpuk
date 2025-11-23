@@ -4,8 +4,9 @@ Data processing utilities for Pukpuk Analysis Service
 
 import pandas as pd
 import numpy as np
-from datetime import datetime
-from typing import List, Dict, Any
+from datetime import datetime, timedelta
+from typing import List, Dict, Any, Optional
+import requests
 from utils.logger import setup_logger
 from utils.config import settings
 
@@ -195,3 +196,93 @@ class DataProcessor:
         except Exception as e:
             self.logger.error(f"Feature engineering failed: {str(e)}")
             return df
+
+    def fetch_ndvi_data(self, lat: float, lng: float, start_date: str, end_date: str) -> pd.DataFrame:
+        """
+        Fetch NDVI (Normalized Difference Vegetation Index) data for location
+
+        Args:
+            lat: Latitude
+            lng: Longitude
+            start_date: Start date (YYYY-MM-DD)
+            end_date: End date (YYYY-MM-DD)
+
+        Returns:
+            DataFrame with NDVI data
+        """
+        try:
+            self.logger.info(f"Fetching NDVI data for coordinates ({lat}, {lng}) from {start_date} to {end_date}")
+
+            # In production, this would call a satellite API like:
+            # - NASA MODIS API
+            # - Sentinel Hub API
+            # - Google Earth Engine
+            # For now, we'll generate synthetic NDVI data based on seasonal patterns
+
+            date_range = pd.date_range(start=start_date, end=end_date, freq='D')
+            ndvi_data = []
+
+            for date in date_range:
+                # Simulate NDVI based on Indonesian agricultural seasons
+                # NDVI typically ranges from -1 to 1, with higher values indicating healthier vegetation
+                day_of_year = date.dayofyear
+
+                # Base NDVI with seasonal variation (higher in wet season)
+                base_ndvi = 0.3 + 0.4 * np.sin(2 * np.pi * day_of_year / 365)
+
+                # Add some noise and location-specific variation
+                noise = np.random.normal(0, 0.1)
+                location_factor = (lat - (-6.2)) * 0.01  # Slight variation by latitude
+
+                ndvi_value = np.clip(base_ndvi + noise + location_factor, -1, 1)
+
+                ndvi_data.append({
+                    'date': date,
+                    'ndvi': round(ndvi_value, 4),
+                    'latitude': lat,
+                    'longitude': lng
+                })
+
+            df_ndvi = pd.DataFrame(ndvi_data)
+            self.logger.info(f"Generated {len(df_ndvi)} NDVI data points")
+            return df_ndvi
+
+        except Exception as e:
+            self.logger.error(f"NDVI data fetch failed: {str(e)}")
+            # Return empty DataFrame on error
+            return pd.DataFrame(columns=['date', 'ndvi', 'latitude', 'longitude'])
+
+    def merge_ndvi_with_demand(self, demand_df: pd.DataFrame, ndvi_df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Merge NDVI data with demand data for forecasting
+
+        Args:
+            demand_df: Demand data DataFrame
+            ndvi_df: NDVI data DataFrame
+
+        Returns:
+            Merged DataFrame
+        """
+        try:
+            self.logger.info("Merging NDVI data with demand data")
+
+            # Ensure date columns are datetime
+            demand_df['date'] = pd.to_datetime(demand_df['date'])
+            ndvi_df['date'] = pd.to_datetime(ndvi_df['date'])
+
+            # Merge on date
+            merged_df = demand_df.merge(ndvi_df[['date', 'ndvi']], on='date', how='left')
+
+            # Forward fill missing NDVI values (satellite data might not be daily)
+            merged_df['ndvi'] = merged_df['ndvi'].fillna(method='ffill')
+
+            # If still missing, use seasonal average
+            if merged_df['ndvi'].isna().any():
+                merged_df['ndvi'] = merged_df['ndvi'].fillna(merged_df['ndvi'].mean())
+
+            self.logger.info(f"Merged data has {len(merged_df)} rows with NDVI data")
+            return merged_df
+
+        except Exception as e:
+            self.logger.error(f"NDVI merge failed: {str(e)}")
+            return demand_df

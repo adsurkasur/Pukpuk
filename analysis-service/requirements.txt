@@ -11,6 +11,18 @@ numpy==1.26.4
 scikit-learn==1.5.2
 statsmodels==0.14.4
 joblib==1.4.2
+# catboost==1.2.7  # Requires Rust, install separately if needed
+
+# Routing and optimization
+ortools==9.14.6206
+
+# AI and LangChain
+langchain==0.3.7
+langchain-google-genai>=2.0.4
+langchain-community==0.3.5
+
+# WhatsApp integration
+twilio==9.8.7
 
 # Utilities
 python-multipart==0.0.17
