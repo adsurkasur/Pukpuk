@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
@@ -31,40 +31,16 @@ interface ChoroplethMapProps {
   geoJsonData: any;
   data: { [key: string]: number };
   mode: 'stock' | 'forecast';
-  onRegionClick?: (_regionId: string) => void;
+  onRegionClick?: (regionId: string) => void;
 }
 
 export default function ChoroplethMap({ geoJsonData, data, mode, onRegionClick }: ChoroplethMapProps) {
-  const mapRef = useRef<L.Map | null>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
   const [isClient, setIsClient] = useState(false);
-  const [mapKey, setMapKey] = useState(0);
+  const [mapError, setMapError] = useState<string | null>(null);
 
-  // Ensure client-side rendering
+  // Ensure client-side rendering only
   useEffect(() => {
     setIsClient(true);
-  }, []);
-
-  // Force re-mount when critical props change
-  useEffect(() => {
-    if (geoJsonData && isClient) {
-      // Clean up existing map before creating new one
-      if (mapRef.current) {
-        mapRef.current.remove();
-        mapRef.current = null;
-      }
-      setMapKey(prev => prev + 1);
-    }
-  }, [geoJsonData, mode, isClient]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (mapRef.current) {
-        mapRef.current.remove();
-        mapRef.current = null;
-      }
-    };
   }, []);
 
   // Color scale based on data values
@@ -97,59 +73,83 @@ export default function ChoroplethMap({ geoJsonData, data, mode, onRegionClick }
   };
 
   const onEachFeature = (feature: any, layer: L.Layer) => {
-    const _regionId = feature.properties.id || feature.properties.name;
-    const value = data[_regionId] || 0;
-
-    // Use regionId to ensure it's not considered unused
-    const displayName = _regionId;
+    const regionId = feature.properties.id || feature.properties.name;
+    const value = data[regionId] || 0;
 
     layer.on({
-      click: () => onRegionClick?.(_regionId)
+      click: () => onRegionClick?.(regionId)
     });
 
     layer.bindPopup(`
       <div>
-        <h3>${feature.properties.name || displayName}</h3>
+        <h3>${feature.properties.name || regionId}</h3>
         <p>${mode === 'stock' ? 'Stock Level' : 'Forecast Demand'}: ${value}${mode === 'stock' ? '%' : ' tons'}</p>
       </div>
     `);
   };
 
-  return (
-    <div ref={containerRef} className="w-full h-96 rounded-lg overflow-hidden border">
-      {isClient && geoJsonData && (
-        <MapContainer
-          key={mapKey}
-          center={[-6.2, 106.816666]} // Jakarta coordinates
-          zoom={8}
-          style={{ height: '100%', width: '100%' }}
-          whenReady={() => {
-            // Map is ready - this callback ensures we don't double-initialize
-            console.log('Map initialized successfully');
-          }}
-          ref={(mapInstance) => {
-            // Only set the ref if it's not already set and we have a valid instance
-            if (mapInstance && !mapRef.current) {
-              mapRef.current = mapInstance;
-            }
-          }}
-        >
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
-          <GeoJSON
-            data={geoJsonData}
-            style={style}
-            onEachFeature={onEachFeature}
-          />
-        </MapContainer>
-      )}
-      {isClient && !geoJsonData && (
-        <div className="w-full h-full flex items-center justify-center bg-gray-100">
-          <p className="text-gray-500">Loading map data...</p>
+  // Generate a stable key based on data and mode to prevent unnecessary re-mounts
+  const mapKey = `map-${mode}-${Object.keys(data).length}`;
+
+  if (!isClient) {
+    return (
+      <div className="w-full h-96 rounded-lg overflow-hidden border bg-gray-100 flex items-center justify-center">
+        <p className="text-gray-500">Loading map...</p>
+      </div>
+    );
+  }
+
+  if (mapError) {
+    return (
+      <div className="w-full h-96 rounded-lg overflow-hidden border bg-red-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 font-medium">Map Error</p>
+          <p className="text-red-500 text-sm">{mapError}</p>
         </div>
-      )}
-    </div>
-  );
+      </div>
+    );
+  }
+
+  try {
+    return (
+      <div className="w-full h-96 rounded-lg overflow-hidden border">
+        {geoJsonData ? (
+          <MapContainer
+            key={mapKey}
+            center={[-6.2, 106.816666]} // Jakarta coordinates
+            zoom={8}
+            style={{ height: '100%', width: '100%' }}
+            zoomControl={true}
+            scrollWheelZoom={true}
+          >
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+            <GeoJSON
+              key={`geojson-${mapKey}`}
+              data={geoJsonData}
+              style={style}
+              onEachFeature={onEachFeature}
+            />
+          </MapContainer>
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-gray-100">
+            <p className="text-gray-500">Loading map data...</p>
+          </div>
+        )}
+      </div>
+    );
+  } catch (error) {
+    console.error('Map rendering error:', error);
+    setMapError('Failed to render map. Please refresh the page.');
+    return (
+      <div className="w-full h-96 rounded-lg overflow-hidden border bg-red-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 font-medium">Map Rendering Failed</p>
+          <p className="text-red-500 text-sm">Please refresh the page to try again.</p>
+        </div>
+      </div>
+    );
+  }
 }
