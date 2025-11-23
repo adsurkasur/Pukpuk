@@ -28,7 +28,7 @@ class ServiceManager:
 
         # Configuration
         self.frontend_port = 3000  # Default, will be detected dynamically
-        self.backend_port = 7860   # Default backend port
+        self.backend_port = 8000   # Python FastAPI service port
         self.hostname = "localhost"  # Default hostname
 
         # Try to set console encoding for better Unicode support

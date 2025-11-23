@@ -1,6 +1,37 @@
+<!-- markdownlint-disable MD013 -->
 # Pukpuk Platform - Agricultural Demand Forecasting
 
-A comprehensive AI-powered platform for agricultural demand forecasting and data management.
+A comprehensive AI-powered platform for agricultural demand forecasting and data management using a hybrid ElysiaJS + Python FastAPI architecture.
+
+## 🏗️ Architecture
+
+This platform uses a **hybrid architecture** designed for optimal performance:
+
+### Frontend Layer
+
+- **Next.js 15** - React framework with App Router
+- **TypeScript** - Type-safe development
+- **Tailwind CSS** - Utility-first styling
+- **Zustand** - Lightweight state management
+
+### API Gateway Layer
+
+- **ElysiaJS** - High-performance Bun-based web framework
+- **JWT Authentication** - Secure API access
+- **CORS** - Cross-origin resource sharing
+- **Request Proxying** - Routes ML requests to Python service
+
+### ML Service Layer
+
+- **FastAPI** - Python web framework for ML workloads
+- **Multiple ML Models** - SMA, WMA, ES, ARIMA, CatBoost
+- **Data Processing** - Pandas-based data manipulation
+- **Model Training** - Automated ML pipeline
+
+### Data Layer
+
+- **MongoDB** - Document database for application data
+- **Firebase Auth** - User authentication and authorization
 
 ## 🚀 Features
 
@@ -36,7 +67,107 @@ A comprehensive AI-powered platform for agricultural demand forecasting and data
 - **Accessibility**: WCAG compliant with proper ARIA labels
 - **State Management**: Persistent state with Zustand
 
-## � Deployment
+## 🛠️ Development
+
+### Prerequisites
+
+- **Node.js 18+** and **Bun** runtime
+- **Python 3.8+** with pip
+- **MongoDB** (local or cloud instance)
+- **Firebase** project with authentication enabled
+
+### Local Development Setup
+
+1. **Clone the repository**
+
+   ```bash
+   git clone <repository-url>
+   cd pukpuk-platform
+   ```
+
+2. **Install dependencies**
+
+   ```bash
+   # Install Node.js dependencies
+   bun install
+
+   # Create and activate Python virtual environment
+   cd analysis-service
+   python -m venv .venv
+   .\.venv\Scripts\Activate.ps1  # On Windows PowerShell
+   # Or: source .venv/bin/activate  # On Mac/Linux
+   pip install -r requirements.txt
+   cd ..
+   ```
+
+3. **Environment Configuration**
+
+   ```bash
+   # Copy environment files
+   cp server/.env.example server/.env
+   cp .env.local.example .env.local
+
+   # Edit environment variables as needed
+   # server/.env - ElysiaJS server configuration
+   # .env.local - Frontend configuration
+   ```
+
+4. **Start Development Services**
+
+   ```bash
+   # Option 1: Start all services together (uses venv)
+   npm run dev:full
+
+   # Option 2: Start services individually (uses venv)
+   npm run server:dev    # ElysiaJS API server (port 3001)
+   npm run services      # Python ML service (port 8000, via venv)
+   npm run dev           # Next.js frontend (port 3000)
+
+   # Or run Python service manually from venv:
+   cd analysis-service
+   .\.venv\Scripts\Activate.ps1
+   python -m uvicorn main:app --host 0.0.0.0 --port 8000
+   # (Keep this terminal open)
+   cd ..
+   # Then run frontend and ElysiaJS as usual
+   ```
+
+5. **Access the application**
+   <!-- markdownlint-disable MD034 -->
+   - **Frontend**: http://localhost:3000
+   - **ElysiaJS API**: http://localhost:3001
+   - **Python ML Service**: http://localhost:8000
+   - **API Documentation**: http://localhost:8000/docs
+   <!-- markdownlint-enable MD034 -->
+
+### Service Architecture
+
+```text
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Next.js       │────│   ElysiaJS      │────│   FastAPI       │
+│   Frontend      │    │   API Gateway   │    │   ML Service    │
+│   (Port 3000)   │    │   (Port 3001)   │    │   (Port 8000)   │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+         │                       │                       │
+         └───────────────────────┼───────────────────────┘
+                                 │
+                    ┌─────────────────┐
+                    │   MongoDB       │
+                    │   Database      │
+                    └─────────────────┘
+```
+
+### Available Scripts
+
+- `npm run dev` - Start Next.js development server
+- `npm run server:dev` - Start ElysiaJS API server with hot reload
+- `npm run services` - Start Python ML service
+- `npm run dev:full` - Start all services concurrently
+- `npm run build` - Build for production
+- `npm run lint` - Run ESLint
+- `npm run typecheck` - Run TypeScript type checking
+
+## 🚀 Deployment
 
 ### Vercel Deployment
 
@@ -135,7 +266,7 @@ If you encounter build errors:
 
 This directory contains scripts to easily start both the frontend (Next.js) and backend (Python analysis service) for the Pukpuk application.
 
-### Available Scripts
+### Service Manager Scripts
 
 #### 1. Python Script (Recommended) - `start_services.py`
 
@@ -695,3 +826,4 @@ For support or questions, please open an issue in the repository.
 ---
 
 © 2025 Pukpuk "Developed by Ade Surya Ananda"
+<!-- markdownlint-enable MD013 -->

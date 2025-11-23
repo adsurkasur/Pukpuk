@@ -13,7 +13,7 @@ import {
 import { auth } from './firebase';
 import { getIdToken } from 'firebase/auth';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001';
 
 // Configure axios instance
 const apiClient = axios.create({

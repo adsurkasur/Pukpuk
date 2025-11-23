@@ -28,10 +28,18 @@ logger = setup_logger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
-    logger.info("Starting Pukpuk Analysis Service")
-    yield
-    # Shutdown
-    logger.info("Shutting down Pukpuk Analysis Service")
+    try:
+        logger.info("Starting Pukpuk Analysis Service")
+        # Test forecast engine initialization
+        engine = ForecastEngine()
+        logger.info("Forecast engine initialized successfully")
+        yield
+    except Exception as e:
+        logger.error(f"Error during startup: {e}")
+        raise
+    finally:
+        # Shutdown
+        logger.info("Shutting down Pukpuk Analysis Service")
 
 # Create FastAPI app
 app = FastAPI(
@@ -289,6 +297,6 @@ if __name__ == "__main__":
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
-        port=int(os.getenv("PORT", 7860)),  # Use 7860 for Hugging Face Spaces
+        port=int(os.getenv("PORT", 8000)),  # Use 8000 for ElysiaJS integration
         reload=True
     )

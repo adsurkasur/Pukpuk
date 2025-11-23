@@ -16,17 +16,24 @@ def install_dependencies():
 def run_service():
     """Run the FastAPI service"""
     print("🚀 Starting Pukpuk Analysis Service...")
-    print("📍 API will be available at: http://localhost:7860")
-    print("📚 API documentation at: http://localhost:7860/docs")
-    print("💚 Health check at: http://localhost:7860/health")
+    print("📍 API will be available at: http://localhost:8000")
+    print("📚 API documentation at: http://localhost:8000/docs")
+    print("💚 Health check at: http://localhost:8000/health")
     print("🔧 Press Ctrl+C to stop the service")
 
     # Set environment variables
     env = os.environ.copy()
     env["PYTHONPATH"] = str(Path(__file__).parent)
-    env["PORT"] = "7860"  # Ensure consistent port
+    env["PORT"] = "8000"  # Match ElysiaJS configuration
 
-    subprocess.run([sys.executable, "main.py"], env=env)
+    # Run uvicorn in the foreground using venv Python
+    subprocess.run([
+        sys.executable,
+        "-m", "uvicorn",
+        "main:app",
+        "--host", "0.0.0.0",
+        "--port", "8000"
+    ], env=env)
 
 def train_model():
     """Train the CatBoost model with artificial data"""
