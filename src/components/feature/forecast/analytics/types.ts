@@ -76,7 +76,7 @@ export interface CorrelationAnalysisProps {
 
 export interface CustomReportsProps {
   config: CustomReportConfig;
-  onConfigChange: (config: CustomReportConfig) => void;
+  onConfigChange: (_config: CustomReportConfig) => void;
   onGenerateReport: () => void;
   templates: ReportTemplate[];
 }

@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback } from 'react';
-import { MapContainer, TileLayer, GeoJSON } from 'react-leaflet';
+import { useCallback, useEffect, useId, useState } from 'react';
+import dynamic from 'next/dynamic';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
@@ -13,6 +13,20 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
+// Dynamically import MapContainer to avoid SSR issues
+const MapContainer = dynamic(
+  () => import('react-leaflet').then((mod) => mod.MapContainer),
+  { ssr: false }
+);
+const TileLayer = dynamic(
+  () => import('react-leaflet').then((mod) => mod.TileLayer),
+  { ssr: false }
+);
+const GeoJSON = dynamic(
+  () => import('react-leaflet').then((mod) => mod.GeoJSON),
+  { ssr: false }
+);
+
 interface ChoroplethMapProps {
   geoJsonData: any;
   data: { [key: string]: number };
@@ -21,6 +35,13 @@ interface ChoroplethMapProps {
 }
 
 export default function ChoroplethMap({ geoJsonData, data, mode, onRegionClick }: ChoroplethMapProps) {
+  const mapId = useId();
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   // Color scale based on data values
   const getColor = useCallback((value: number) => {
     if (mode === 'stock') {
@@ -71,23 +92,26 @@ export default function ChoroplethMap({ geoJsonData, data, mode, onRegionClick }
 
   return (
     <div className="w-full h-96 rounded-lg overflow-hidden border">
-      <MapContainer
-        center={[-6.2, 106.816666]} // Jakarta coordinates
-        zoom={8}
-        style={{ height: '100%', width: '100%' }}
-      >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-        {geoJsonData && (
-          <GeoJSON
-            data={geoJsonData}
-            style={style}
-            onEachFeature={onEachFeature}
+      {isClient && (
+        <MapContainer
+          center={[-6.2, 106.816666]} // Jakarta coordinates
+          zoom={8}
+          style={{ height: '100%', width: '100%' }}
+          key={`map-${mapId}-${JSON.stringify(data)}`}
+        >
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
-        )}
-      </MapContainer>
+          {geoJsonData && (
+            <GeoJSON
+              data={geoJsonData}
+              style={style}
+              onEachFeature={onEachFeature}
+            />
+          )}
+        </MapContainer>
+      )}
     </div>
   );
 }

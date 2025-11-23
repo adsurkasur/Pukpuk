@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { AdvancedForecastControls } from "@/components/feature/forecast/controls";
 import { EnhancedDemandChart } from "@/components/feature/forecast/enhanced-demand-chart";
@@ -7,8 +7,10 @@ import { ExportCapabilities } from "@/components/feature/forecast/export";
 import { AdvancedAnalytics } from "@/components/feature/forecast/AdvancedAnalytics";
 import { RealTimeDataStreaming } from "@/components/feature/forecast/realtime";
 import { useDemands } from "@/hooks/useApiHooks";
+import { forecastApi } from "@/lib/api-client";
 import { ForecastResponse } from "@/types/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MarkdownRenderer } from "@/components/common/MarkdownRenderer";
 import { Loader2, BarChart3, TrendingUp, Target, Brain, Activity } from "lucide-react";
@@ -24,8 +26,29 @@ export default function ForecastPage() {
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
 
+  // Choropleth map data
+  const [choroplethData, setChoroplethData] = useState<{
+    geoJson: any;
+    data: { [key: string]: number };
+    mode: 'stock' | 'forecast';
+  } | null>(null);
+  const [mapMode, setMapMode] = useState<'stock' | 'forecast'>('stock');
+
   // Get all demand data for chart display
   const { data: allDemandsData } = useDemands({ limit: 1000 });
+
+  useEffect(() => {
+    const fetchChoroplethData = async () => {
+      try {
+        const data = await forecastApi.getChoroplethData(mapMode, 'west-java');
+        setChoroplethData(data);
+      } catch (error) {
+        console.error('Failed to fetch choropleth data:', error);
+      }
+    };
+
+    fetchChoroplethData();
+  }, [mapMode]);
 
   const handleForecastGenerated = (forecast: ForecastResponse) => {
     setForecastData(forecast);
@@ -123,10 +146,26 @@ export default function ForecastPage() {
                   <div className="text-sm text-muted-foreground mb-4">
                     Visualize stock levels and forecast demand across regions
                   </div>
+                  <div className="flex gap-2 mb-4">
+                    <Button
+                      variant={mapMode === 'stock' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setMapMode('stock')}
+                    >
+                      Stock View
+                    </Button>
+                    <Button
+                      variant={mapMode === 'forecast' ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setMapMode('forecast')}
+                    >
+                      Forecast View
+                    </Button>
+                  </div>
                   <ChoroplethMap
-                    geoJsonData={null} // TODO: Load actual geo data
-                    data={{}} // TODO: Load actual stock/forecast data
-                    mode="stock"
+                    geoJsonData={choroplethData?.geoJson || null}
+                    data={choroplethData?.data || {}}
+                    mode={mapMode}
                     onRegionClick={(regionId) => console.log('Region clicked:', regionId)}
                   />
                 </CardContent>

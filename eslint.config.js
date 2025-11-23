@@ -13,7 +13,7 @@ const compat = new FlatCompat({
 
 const eslintConfig = [
   // Global ignore patterns
-  { ignores: ["dist", ".next", ".next/types", "node_modules", "tailwind.config.ts", "server/**/*"] },
+  { ignores: ["dist", ".next", ".next/types", "node_modules"] },
 
   // Base configurations
   js.configs.recommended,
@@ -23,9 +23,9 @@ const eslintConfig = [
     extends: ['next'],
   }),
 
-  // TypeScript files (project-aware)
+  // TypeScript files (project-aware) - only for src
   {
-    files: ["**/*.{ts,tsx}"],
+    files: ["src/**/*.{ts,tsx}"],
     languageOptions: {
       parser: tsParser,
       parserOptions: {
@@ -50,17 +50,83 @@ const eslintConfig = [
       // bring in recommended React hooks rules
       ...reactHooks.configs.recommended.rules,
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
-      // Enable unused vars with proper configuration
+      // Enable unused vars with strict configuration - only ignore underscore-prefixed vars
       "@typescript-eslint/no-unused-vars": ["error", {
-        argsIgnorePattern: "^_|^(state|val|value|prevValue|updates|message|messages|typing|config|forecasting|ids|payload|name|props|index)$",
-        varsIgnorePattern: "^_|^(state|val|value|prevValue|updates|message|messages|typing|config|forecasting|ids|payload|name|props|index)$",
+        argsIgnorePattern: "^_",
+        varsIgnorePattern: "^_",
         ignoreRestSiblings: true,
-        caughtErrors: "none"
+        caughtErrorsIgnorePattern: "^_"
       }],
       "no-unused-vars": ["error", {
-        argsIgnorePattern: "^_|^(state|val|value|prevValue|updates|message|messages|typing|config|forecasting|ids|payload|name|props|index)$",
-        varsIgnorePattern: "^_|^(state|val|value|prevValue|updates|message|messages|typing|config|forecasting|ids|payload|name|props|index)$",
+        argsIgnorePattern: "^_",
+        varsIgnorePattern: "^_",
         ignoreRestSiblings: true
+      }],
+    },
+  },
+
+  // TypeScript files in server - without project
+  {
+    files: ["server/**/*.{ts,tsx}"],
+    languageOptions: {
+      parser: tsParser,
+      parserOptions: {
+        ecmaVersion: 2020,
+        sourceType: "module",
+      },
+      globals: {
+        ...globals.node,
+        process: "readonly",
+      },
+    },
+    plugins: {
+      "@typescript-eslint": tsPlugin,
+    },
+    rules: {
+      "no-undef": "off",
+      "no-unused-vars": ["error", {
+        varsIgnorePattern: "^_",
+        argsIgnorePattern: "^_",
+        ignoreRestSiblings: true
+      }],
+      "@typescript-eslint/no-unused-vars": ["error", {
+        argsIgnorePattern: "^_",
+        varsIgnorePattern: "^_",
+        ignoreRestSiblings: true,
+        caughtErrorsIgnorePattern: "^_"
+      }],
+    },
+  },
+
+  // Tailwind config
+  {
+    files: ["tailwind.config.ts"],
+    languageOptions: {
+      parser: tsParser,
+      parserOptions: {
+        ecmaVersion: 2020,
+        sourceType: "module",
+      },
+      globals: {
+        ...globals.node,
+        process: "readonly",
+      },
+    },
+    plugins: {
+      "@typescript-eslint": tsPlugin,
+    },
+    rules: {
+      "no-undef": "off",
+      "no-unused-vars": ["error", {
+        varsIgnorePattern: "^_",
+        argsIgnorePattern: "^_",
+        ignoreRestSiblings: true
+      }],
+      "@typescript-eslint/no-unused-vars": ["error", {
+        argsIgnorePattern: "^_",
+        varsIgnorePattern: "^_",
+        ignoreRestSiblings: true,
+        caughtErrorsIgnorePattern: "^_"
       }],
     },
   },

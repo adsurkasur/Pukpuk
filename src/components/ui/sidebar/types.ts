@@ -63,8 +63,8 @@ export interface SidebarInsetProps {
 
 export interface SidebarInputProps {
   placeholder?: string;
-  value?: string;
-  onChange?: (value: string) => void;
+  _value?: string;
+  onChange?: (_value: string) => void;
   className?: string;
 }
 

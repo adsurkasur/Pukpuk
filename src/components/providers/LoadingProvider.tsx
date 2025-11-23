@@ -6,7 +6,7 @@ interface LoadingContextType {
   isLoading: boolean;
   loadingMessage: string;
   setIsLoading: (_loading: boolean) => void;
-  startLoading: (message?: string) => void;
+  startLoading: (_message?: string) => void;
   stopLoading: () => void;
 }
 
@@ -62,10 +62,10 @@ export function LoadingProvider({ children }: LoadingProviderProps) {
     }
   }, [pathname, isNavigating, lastNavigationTime, currentPath]);
 
-  const startLoading = (message = "Loading Pukpuk...") => {
+  const startLoading = (_message = "Loading Pukpuk...") => {
     const navigationTime = Date.now();
     setLastNavigationTime(navigationTime);
-    setLoadingMessage(message);
+    setLoadingMessage(_message);
     setIsLoading(true);
     setIsNavigating(true);
 
@@ -84,6 +84,10 @@ export function LoadingProvider({ children }: LoadingProviderProps) {
     setIsNavigating(false);
   };
 
+  const setIsLoadingState = (_loading: boolean) => {
+    setIsLoading(_loading);
+  };
+
   const showLoading = isLoading || isInitialLoad;
 
   return (
@@ -91,7 +95,7 @@ export function LoadingProvider({ children }: LoadingProviderProps) {
       value={{
         isLoading: showLoading,
         loadingMessage,
-        setIsLoading,
+        setIsLoading: setIsLoadingState,
         startLoading,
         stopLoading,
       }}

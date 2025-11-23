@@ -20,19 +20,19 @@ interface AppState {
   selectedRowIds: string[];
   
   // Actions
-  setUI: (updates: Partial<UIState>) => void;
-  addChatMessage: (message: Message) => void;
-  setChatMessages: (messages: Message[]) => void;
-  setAiTyping: (typing: boolean) => void;
+  setUI: (_updates: Partial<UIState>) => void;
+  addChatMessage: (_message: Message) => void;
+  setChatMessages: (_messages: Message[]) => void;
+  setAiTyping: (_typing: boolean) => void;
   setCurrentChatId: (_id: string | null) => void;
   createNewChat: (_name?: string) => string;
   loadChat: (_id: string) => void;
   renameChat: (_id: string, _name: string) => void;
   deleteChat: (_id: string) => void;
   clearChat: () => void;
-  setForecastConfig: (config: Partial<ChartConfig>) => void;
-  setForecasting: (forecasting: boolean) => void;
-  setSelectedRowIds: (ids: string[]) => void;
+  setForecastConfig: (_config: Partial<ChartConfig>) => void;
+  setForecasting: (_forecasting: boolean) => void;
+  setSelectedRowIds: (_ids: string[]) => void;
   reset: () => void;
 }
 
@@ -60,14 +60,14 @@ export const useAppStore = create<AppState>()(
     (set) => ({
       ...initialState,
       
-      setUI: (updates) =>
+      setUI: (_updates) =>
         set((state) => ({
-          ui: { ...state.ui, ...updates },
+          ui: { ...state.ui, ..._updates },
         })),
       
-      addChatMessage: (message) =>
+      addChatMessage: (_message) =>
         set((state) => {
-          const newMessages = [...state.chatMessages, message];
+          const newMessages = [...state.chatMessages, _message];
           let updatedSessions = { ...state.chatSessions };
           
           // Update the current chat session with the new messages
@@ -79,13 +79,13 @@ export const useAppStore = create<AppState>()(
           }
           
           // If this is the first user message and the chat name is still generic, update it
-          if (message.role === 'user' && state.currentChatId && state.chatMessages.length === 0) {
+          if (_message.role === 'user' && state.currentChatId && state.chatMessages.length === 0) {
             const currentSession = updatedSessions[state.currentChatId];
             if (currentSession && currentSession.name.startsWith('Chat ')) {
               // Generate a title from the first message (truncate to 50 chars)
-              const titleFromMessage = message.content.length > 50 
-                ? message.content.substring(0, 50) + '...'
-                : message.content;
+              const titleFromMessage = _message.content.length > 50 
+                ? _message.content.substring(0, 50) + '...'
+                : _message.content;
               
               updatedSessions[state.currentChatId] = {
                 ...currentSession,
@@ -100,20 +100,20 @@ export const useAppStore = create<AppState>()(
           };
         }),
       
-      setChatMessages: (messages) =>
-        set({ chatMessages: messages }),
+      setChatMessages: (_messages) =>
+        set({ chatMessages: _messages }),
       
-      setAiTyping: (typing: boolean) =>
-        set({ isAiTyping: typing }),
+      setAiTyping: (_typing: boolean) =>
+        set({ isAiTyping: _typing }),
       
-      setCurrentChatId: (id: string | null) =>
-        set({ currentChatId: id }),
+      setCurrentChatId: (_id: string | null) =>
+        set({ currentChatId: _id }),
       
-      createNewChat: (name?: string) => {
+      createNewChat: (_name?: string) => {
         const chatId = `chat-${Date.now()}`;
         
         set((state) => {
-          let chatName = name;
+          let chatName = _name;
           
           if (!chatName) {
             // Generate unique name by checking existing names
@@ -141,39 +141,39 @@ export const useAppStore = create<AppState>()(
         return chatId;
       },
       
-      loadChat: (id: string) =>
+      loadChat: (_id: string) =>
         set((state) => {
-          const session = state.chatSessions[id];
+          const session = state.chatSessions[_id];
           if (session) {
             return {
-              currentChatId: id,
+              currentChatId: _id,
               chatMessages: session.messages,
             };
           }
           return state;
         }),
       
-      renameChat: (id: string, name: string) =>
+      renameChat: (_id: string, _name: string) =>
         set((state) => ({
           chatSessions: {
             ...state.chatSessions,
-            [id]: {
-              ...state.chatSessions[id],
-              name,
+            [_id]: {
+              ...state.chatSessions[_id],
+              name: _name,
             },
           },
         })),
       
-      deleteChat: (id: string) =>
+      deleteChat: (_id: string) =>
         set((state) => {
           const newSessions = { ...state.chatSessions };
-          delete newSessions[id];
+          delete newSessions[_id];
           
           let newCurrentId = state.currentChatId;
           let newMessages = state.chatMessages;
           
           // If we're deleting the current chat
-          if (state.currentChatId === id) {
+          if (state.currentChatId === _id) {
             const remainingChatIds = Object.keys(newSessions);
             
             if (remainingChatIds.length > 0) {
@@ -195,16 +195,16 @@ export const useAppStore = create<AppState>()(
           };
         }),
       
-      setForecastConfig: (config: Partial<ChartConfig>) =>
+      setForecastConfig: (_config: Partial<ChartConfig>) =>
         set((state) => ({
-          forecastConfig: { ...state.forecastConfig, ...config },
+          forecastConfig: { ...state.forecastConfig, ..._config },
         })),
       
-      setForecasting: (forecasting: boolean) =>
-        set({ isForecasting: forecasting }),
+      setForecasting: (_forecasting: boolean) =>
+        set({ isForecasting: _forecasting }),
       
-      setSelectedRowIds: (ids: string[]) =>
-        set({ selectedRowIds: ids }),
+      setSelectedRowIds: (_ids: string[]) =>
+        set({ selectedRowIds: _ids }),
       
       clearChat: () =>
         set({ chatMessages: [], isAiTyping: false }),

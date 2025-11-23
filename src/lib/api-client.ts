@@ -91,6 +91,40 @@ export const forecastApi = {
     const response = await apiClient.post<ForecastResponse>('/forecast', data);
     return response.data;
   },
+
+  // Get choropleth map data
+  async getChoroplethData(mode: 'stock' | 'forecast' = 'stock', region: string = 'west-java') {
+    const response = await apiClient.get('/forecast/choropleth', {
+      params: { mode, region }
+    });
+    return response.data;
+  },
+
+  // Optimize route
+  async optimizeRoute(data: any) {
+    const response = await apiClient.post('/forecast/optimize-route', data);
+    return response.data;
+  },
+
+  // Check compliance
+  async checkCompliance(data: any) {
+    const response = await apiClient.post('/forecast/compliance-check', data);
+    return response.data;
+  },
+
+  // Parse chat message
+  async parseChat(data: { chatMessage: string }) {
+    const response = await apiClient.post('/forecast/parse-chat', data);
+    return response.data;
+  },
+
+  // Get analytics
+  async getAnalytics(product?: string, period?: string) {
+    const response = await apiClient.get('/forecast/analytics', {
+      params: { product, period }
+    });
+    return response.data;
+  },
 };
 
 // Chat API

@@ -107,7 +107,7 @@ export function BusinessIntelligenceDashboard({
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${metrics.totalRevenue.toLocaleString()}</div>
+            <div className="text-2xl font-bold">${metrics.totalRevenue.toLocaleString('en-US')}</div>
             <p className="text-xs text-muted-foreground">
               ${Math.round(metrics.avgRevenue)}/day avg
             </p>
@@ -195,7 +195,7 @@ export function BusinessIntelligenceDashboard({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="text-center">
               <div className="text-2xl font-bold text-green-600">
-                ${Math.round(metrics.totalRevenue * 1.1).toLocaleString()}
+                ${Math.round(metrics.totalRevenue * 1.1).toLocaleString('en-US')}
               </div>
               <p className="text-sm text-muted-foreground">Optimistic Scenario</p>
               <p className="text-xs text-green-600">+10% growth</p>
@@ -203,7 +203,7 @@ export function BusinessIntelligenceDashboard({
 
             <div className="text-center">
               <div className="text-2xl font-bold text-blue-600">
-                ${Math.round(metrics.totalRevenue).toLocaleString()}
+                ${Math.round(metrics.totalRevenue).toLocaleString('en-US')}
               </div>
               <p className="text-sm text-muted-foreground">Realistic Scenario</p>
               <p className="text-xs text-blue-600">Base projection</p>
@@ -211,7 +211,7 @@ export function BusinessIntelligenceDashboard({
 
             <div className="text-center">
               <div className="text-2xl font-bold text-red-600">
-                ${Math.round(metrics.totalRevenue * 0.9).toLocaleString()}
+                ${Math.round(metrics.totalRevenue * 0.9).toLocaleString('en-US')}
               </div>
               <p className="text-sm text-muted-foreground">Conservative Scenario</p>
               <p className="text-xs text-red-600">-10% risk</p>

@@ -40,7 +40,7 @@ export const authRoutes = new Elysia({ prefix: '/api/auth' })
   })
 
   .post('/register', async ({ body, jwt, set }) => {
-    const { email, password, name } = body
+    const { email, password: _password, name } = body
 
     // Mock registration
     const token = await jwt.sign({
@@ -91,7 +91,7 @@ export const authRoutes = new Elysia({ prefix: '/api/auth' })
           name: 'User Name'
         }
       }
-    } catch (error) {
+    } catch {
       set.status = 401
       return { error: 'Invalid token' }
     }

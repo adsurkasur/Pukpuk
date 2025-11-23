@@ -22,35 +22,49 @@ import {
   LogIn,
   LogOut,
   User,
-  Truck
+  Truck,
+  Shield,
+  Map
 } from "lucide-react";
 import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 
 const navigation = [
   {
+    name: "Dashboard",
+    href: "/",
+    icon: Map,
+    description: "PUKPUK Ecosystem Overview"
+  },
+  {
     name: "Data Management",
     href: "/data",
     icon: Database,
-    description: "Manage sales data and view analytics"
+    description: "Manage sales data and analytics"
   },
   {
-    name: "Forecasting",
+    name: "AI Forecasting",
     href: "/forecast",
     icon: TrendingUp,
-    description: "Generate demand forecasts"
+    description: "CatBoost demand predictions with NDVI"
+  },
+  {
+    name: "Route Optimization",
+    href: "/tracking",
+    icon: Truck,
+    description: "Eco-smart delivery route planning"
+  },
+  {
+    name: "Compliance Monitoring",
+    href: "/compliance",
+    icon: Shield,
+    description: "HET compliance & WhatsApp audits"
   },
   {
     name: "AI Assistant",
     href: "/assistant",
     icon: MessageSquare,
-    description: "Get AI-powered insights"
-  },
-  {
-    name: "Tracking and Route Optimization",
-    href: "/tracking",
-    icon: Truck,
-    description: "Track deliveries and optimize routes"
+    description: "Agentic AI insights & recommendations"
   }
 ];
 

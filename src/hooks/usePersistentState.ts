@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 export function usePersistentState<T>(
   key: string,
   defaultValue: T
-): [T, (value: T | ((prevValue: T) => T)) => void] {
+): [T, (_value: T | ((_prevValue: T) => T)) => void] {
 
   const [state, setState] = useState<T>(() => {
     if (typeof window === 'undefined') {

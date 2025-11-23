@@ -1,7 +1,7 @@
 import { Elysia, t } from 'elysia'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 
-const PYTHON_SERVICE_URL = process.env.PYTHON_SERVICE_URL || 'http://localhost:8000'
+const _PYTHON_SERVICE_URL = process.env.PYTHON_SERVICE_URL || 'http://localhost:8000'
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY
 
 // Initialize Gemini AI

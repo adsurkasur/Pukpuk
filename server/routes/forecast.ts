@@ -227,3 +227,68 @@ export const forecastRoutes = new Elysia({ prefix: '/api/forecast' })
       }
     }
   })
+
+  .get('/choropleth', async ({ query, set }) => {
+    try {
+      const { mode = 'stock', region = 'west-java' } = query
+
+      // Mock choropleth data - in production, this would come from database
+      // GeoJSON for West Java administrative boundaries
+      const mockGeoJson = {
+        type: "FeatureCollection",
+        features: [
+          {
+            type: "Feature",
+            properties: { id: "indramayu", name: "Indramayu", region: "West Java" },
+            geometry: {
+              type: "Polygon",
+              coordinates: [[[108.1, -6.3], [108.4, -6.3], [108.4, -6.6], [108.1, -6.6], [108.1, -6.3]]]
+            }
+          },
+          {
+            type: "Feature",
+            properties: { id: "cirebon", name: "Cirebon", region: "West Java" },
+            geometry: {
+              type: "Polygon",
+              coordinates: [[[108.5, -6.7], [108.8, -6.7], [108.8, -6.9], [108.5, -6.9], [108.5, -6.7]]]
+            }
+          },
+          {
+            type: "Feature",
+            properties: { id: "subang", name: "Subang", region: "West Java" },
+            geometry: {
+              type: "Polygon",
+              coordinates: [[[107.7, -6.5], [107.9, -6.5], [107.9, -6.7], [107.7, -6.7], [107.7, -6.5]]]
+            }
+          }
+        ]
+      }
+
+      // Mock data values based on mode
+      const mockData: { [key: string]: number } = {}
+      if (mode === 'stock') {
+        mockData['indramayu'] = 25 // Low stock
+        mockData['cirebon'] = 85 // Good stock
+        mockData['subang'] = 60 // Medium stock
+      } else if (mode === 'forecast') {
+        mockData['indramayu'] = 150 // High demand forecast
+        mockData['cirebon'] = 45 // Low demand forecast
+        mockData['subang'] = 75 // Medium demand forecast
+      }
+
+      return {
+        geoJson: mockGeoJson,
+        data: mockData,
+        mode,
+        region,
+        lastUpdated: new Date().toISOString()
+      }
+    } catch (error) {
+      console.error('Choropleth data fetch error:', error)
+      set.status = 500
+      return {
+        error: 'Failed to fetch choropleth data',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      }
+    }
+  })

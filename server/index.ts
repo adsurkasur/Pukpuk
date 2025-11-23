@@ -13,7 +13,7 @@ import { dataRoutes } from './routes/data'
 import { forecastRoutes } from './routes/forecast'
 import { chatRoutes } from './routes/chat'
 
-const app = new Elysia()
+const _app = new Elysia()
   .use(cors({
     origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000', 'http://localhost:5173'],
     credentials: true
@@ -59,5 +59,3 @@ const app = new Elysia()
   })
 
 console.log(`🚀 ElysiaJS API server running on http://localhost:${process.env.PORT || 3001}`)
-
-export type App = typeof app

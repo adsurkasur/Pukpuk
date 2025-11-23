@@ -8,7 +8,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "server": "cd server && bun run dev",
+    "server": "cd server && bun --hot index.ts",
     "server:dev": "cd server && bun --hot index.ts",
     "server:build": "cd server && bun build index.ts --outdir ../dist",
     "services": "cd analysis-service && .venv\\Scripts\\python.exe run.py run",

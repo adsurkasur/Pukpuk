@@ -53,7 +53,7 @@ export interface ForecastModel {
 }
 
 export interface Scenario {
-  id: 'optimistic' | 'pessimistic' | 'realistic';
+  id: 'optimistic' | 'pessimistic' | 'realistic' | 'ndvi-vegetative' | 'ndvi-flowering' | 'ndvi-harvest';
   name: string;
   description: string;
 }
