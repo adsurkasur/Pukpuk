@@ -264,11 +264,11 @@ If you encounter build errors:
 
 ## 🛠️ Service Manager
 
-This directory contains scripts to easily start both the frontend (Next.js) and backend (Python analysis service) for the Pukpuk application.
+The `scripts/` directory contains scripts to easily start both the frontend (Next.js) and backend (Python analysis service) for the Pukpuk application.
 
 ### Service Manager Scripts
 
-#### 1. Python Script (Recommended) - `start_services.py`
+#### 1. Python Script (Recommended) - `scripts/start_services.py`
 
 A comprehensive Python script that manages both services with proper error handling, monitoring, and graceful shutdown.
 
@@ -288,29 +288,29 @@ A comprehensive Python script that manages both services with proper error handl
 
 ```bash
 # Start both services (with dynamic port detection)
-python start_services.py
+python scripts/start_services.py
 
 # Start only frontend
-python start_services.py --frontend-only
+python scripts/start_services.py --frontend-only
 
 # Start only backend
-python start_services.py --backend-only
+python scripts/start_services.py --backend-only
 
 # Custom ports and hostname
-python start_services.py --frontend-port 3001 --backend-port 8000 --hostname 192.168.1.100
+python scripts/start_services.py --frontend-port 3001 --backend-port 8000 --hostname 192.168.1.100
 ```
 
-#### 2. Windows Batch Script - `start_services.bat`
+#### 2. Windows Batch Script - `scripts/start_services.bat`
 
 Simple Windows batch file for quick startup on Windows systems.
 
 **Usage:**
 
 ```cmd
-start_services.bat
+scripts\start_services.bat
 ```
 
-#### 3. PowerShell Script - `start_services.ps1`
+#### 3. PowerShell Script - `scripts/start_services.ps1`
 
 PowerShell script with parameter support for advanced configuration.
 
@@ -318,26 +318,26 @@ PowerShell script with parameter support for advanced configuration.
 
 ```powershell
 # Start both services with defaults
-.\start_services.ps1
+.\scripts\start_services.ps1
 
 # Custom configuration
-.\start_services.ps1 -FrontendPort 3001 -BackendPort 8000 -Hostname "192.168.1.100"
+.\scripts\start_services.ps1 -FrontendPort 3001 -BackendPort 8000 -Hostname "192.168.1.100"
 
 # Start only frontend
-.\start_services.ps1 -FrontendOnly
+.\scripts\start_services.ps1 -FrontendOnly
 
 # Start only backend
-.\start_services.ps1 -BackendOnly
+.\scripts\start_services.ps1 -BackendOnly
 ```
 
-#### 4. Shell Script - `start_services.sh`
+#### 4. Shell Script - `scripts/start_services.sh`
 
 Shell script for Unix-like systems (Linux/Mac).
 
 **Usage:**
 
 ```bash
-./start_services.sh
+./scripts/start_services.sh
 ```
 
 ### What the Scripts Do
@@ -397,7 +397,7 @@ python run.py run
 
 ### Development Tips
 
-- Use the Python script (`start_services.py`) for the best development experience
+- Use the Python script (`scripts/start_services.py`) for the best development experience
 - Check the console output for any error messages
 - Both services will restart automatically when you make code changes
 - Use Ctrl+C to stop all services gracefully
@@ -426,7 +426,7 @@ This guide explains how to test the forecasting feature of Pukpuk using the enha
 2. **Running Services**: Start both frontend and backend services:
 
    ```bash
-   python start_services.py
+   python scripts/start_services.py
    ```
 
 3. **MongoDB Connection**: Ensure MongoDB is running and accessible
@@ -611,7 +611,7 @@ This guide explains how to test the forecasting feature of Pukpuk using the enha
 
    ```bash
    # Check if services are running
-   python start_services.py --help
+   python scripts/start_services.py --help
    ```
 
 2. **View Enhanced Logs**:
