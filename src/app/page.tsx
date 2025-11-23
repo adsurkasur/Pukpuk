@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { LoadingScreen } from '@/components/common/LoadingScreen';
 import { useNavigation } from '@/hooks/useNavigation';
 import { useGlobalLoading } from '@/hooks/useGlobalLoading';
-import { ArrowRight, TrendingUp, Database, MessageSquare } from 'lucide-react';
+import { ArrowRight, TrendingUp, Database, MessageSquare, Truck } from 'lucide-react';
 
 export default function HomePage() {
   const [isInitialLoading, setIsInitialLoading] = useState(true);
@@ -77,7 +77,7 @@ export default function HomePage() {
           </div>
 
           {/* Features Grid */}
-          <div className="mt-20 grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          <div className="mt-20 grid md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
             <Card className="border-green-200 dark:border-green-800 hover:shadow-lg transition-all duration-300">
               <CardContent className="p-6 text-center space-y-4">
                 <div className="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mx-auto">
@@ -110,6 +110,18 @@ export default function HomePage() {
                 <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">AI Assistant</h3>
                 <p className="text-gray-600 dark:text-gray-400">
                   Get intelligent insights and recommendations powered by our AI assistant.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-green-200 dark:border-green-800 hover:shadow-lg transition-all duration-300">
+              <CardContent className="p-6 text-center space-y-4">
+                <div className="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mx-auto">
+                  <Truck className="h-6 w-6 text-green-600 dark:text-green-400" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Tracking & Route Optimization</h3>
+                <p className="text-gray-600 dark:text-gray-400">
+                  Track your operations and optimize delivery routes for maximum efficiency.
                 </p>
               </CardContent>
             </Card>
