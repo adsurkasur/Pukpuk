@@ -1,0 +1,252 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Pukpuk Design System - Agricultural Data Platform Theme
+All colors MUST be HSL for consistency and theming support.
+*/
+
+@layer base {
+  :root {
+    /* Core Background & Surfaces */
+    --background: 45 15% 97%;
+    --foreground: 150 8% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 150 8% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 150 8% 15%;
+
+    /* Agricultural Green Primary Palette */
+    --primary: 142 76% 36%;
+    --primary-foreground: 0 0% 98%;
+    --primary-hover: 142 76% 30%;
+    --primary-light: 142 76% 85%;
+
+    /* Earth Tone Secondary */
+    --secondary: 35 25% 92%;
+    --secondary-foreground: 150 8% 15%;
+    --secondary-hover: 35 25% 85%;
+
+    /* Warm Muted Tones */
+    --muted: 40 20% 94%;
+    --muted-foreground: 150 6% 45%;
+
+    /* Harvest Green Accent */
+    --accent: 142 76% 36%;
+    --accent-foreground: 0 0% 98%;
+    --accent-hover: 142 76% 30%;
+    --accent-light: 142 76% 85%;
+
+    /* Data Visualization Colors */
+    --chart-demand: 142 76% 36%;
+    --chart-forecast: 142 76% 40%;
+    --chart-confidence: 45 93% 60%;
+    --chart-grid: 150 6% 85%;
+    --chart-background: 0 0% 100%;
+
+    /* Status Colors */
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 98%;
+    --warning: 45 93% 47%;
+    --warning-foreground: 150 8% 15%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 150 15% 8%;
+
+    /* Interface Elements */
+    --border: 150 10% 88%;
+    --input: 150 10% 88%;
+    --ring: 142 76% 36%;
+
+    /* AI Assistant Specific */
+    --ai-bubble-user: 142 76% 36%;
+    --ai-bubble-assistant: 35 25% 92%;
+    --ai-suggestion: 142 76% 90%;
+
+    /* Data States */
+    --data-pending: 45 93% 47%;
+    --data-error: 0 84% 60%;
+    --data-success: 142 76% 36%;
+
+    /* Typography & Layout */
+    --radius: 0.5rem;
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    /* Dark Mode - Agricultural Night Theme */
+    --background: 150 15% 8%;
+    --foreground: 45 15% 95%;
+
+    --card: 150 15% 10%;
+    --card-foreground: 45 15% 95%;
+
+    --popover: 150 15% 10%;
+    --popover-foreground: 45 15% 95%;
+
+    --primary: 142 76% 45%;
+    --primary-foreground: 150 15% 8%;
+    --primary-hover: 142 76% 50%;
+    --primary-light: 142 76% 20%;
+
+    --secondary: 150 10% 15%;
+    --secondary-foreground: 45 15% 95%;
+    --secondary-hover: 150 10% 20%;
+
+    --muted: 150 10% 13%;
+    --muted-foreground: 150 6% 65%;
+
+    --accent: 142 76% 45%;
+    --accent-foreground: 150 15% 8%;
+    --accent-hover: 142 76% 50%;
+    --accent-light: 142 76% 20%;
+
+    --chart-demand: 142 76% 45%;
+    --chart-forecast: 142 76% 50%;
+    --chart-confidence: 45 93% 65%;
+    --chart-grid: 150 6% 25%;
+    --chart-background: 150 15% 10%;
+
+    --success: 142 76% 45%;
+    --success-foreground: 150 15% 8%;
+    --warning: 45 93% 55%;
+    --warning-foreground: 150 15% 8%;
+    --destructive: 0 84% 65%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 150 10% 20%;
+    --input: 150 10% 20%;
+    --ring: 142 76% 45%;
+
+    --ai-bubble-user: 142 76% 45%;
+    --ai-bubble-assistant: 150 10% 15%;
+    --ai-suggestion: 142 76% 20%;
+
+    --data-pending: 45 93% 55%;
+    --data-error: 0 84% 65%;
+    --data-success: 142 76% 45%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+
+  /* Unified Animation System - All 300ms, Non-Stackable */
+  .animate-fast,
+  .animate-normal,
+  .animate-colors-fast,
+  .animate-colors-normal,
+  .animate-transform-normal,
+  .animate-transform-fast,
+  .animate-opacity-fast {
+    transition: all 0.3s ease-out !important;
+    transition-behavior: allow-discrete;
+  }
+
+  /* Comprehensive animation coverage for all interactive elements - Non-Stackable */
+  button, a, input, textarea, select, [role="button"], [tabindex] {
+    transition: all 0.3s ease-out !important;
+    transition-behavior: allow-discrete;
+  }
+
+  /* Ensure all UI components have consistent animations - Non-Stackable */
+  [class*="hover:"], [class*="focus:"], [class*="active:"],
+  [class*="group-hover:"], [class*="group-focus:"], [class*="peer-hover:"],
+  [class*="peer-focus:"], [class*="peer-checked:"], [class*="data-"] {
+    transition: all 0.3s ease-out !important;
+    transition-behavior: allow-discrete;
+  }
+
+  /* Theme transition handling - Optimized for non-stacking */
+  .theme-transitioning .card,
+  .theme-transitioning [class*="card"],
+  .theme-transitioning .sidebar,
+  .theme-transitioning .modal,
+  .theme-transitioning .popover {
+    transition: background-color 0.3s ease-out,
+                color 0.3s ease-out,
+                border-color 0.3s ease-out,
+                box-shadow 0.3s ease-out !important;
+    will-change: background-color, color, border-color, box-shadow;
+    contain: layout style paint;
+    transition-behavior: allow-discrete;
+  }
+
+  /* Enhanced icon and SVG optimizations - Non-Stackable */
+  .theme-transitioning svg,
+  .theme-transitioning .icon,
+  .theme-transitioning [class*="icon"] {
+    transition: fill 0.3s ease-out,
+                stroke 0.3s ease-out,
+                opacity 0.3s ease-out !important;
+    will-change: fill, stroke, opacity;
+    contain: layout style;
+    transition-behavior: allow-discrete;
+  }
+
+  /* Smooth transition class - Non-Stackable */
+  .transition-smooth {
+    transition: all 0.3s ease-out !important;
+    transition-behavior: allow-discrete;
+  }
+
+  /* Global animation coverage for all elements */
+  * {
+    transition-property: background-color, color, border-color, box-shadow, opacity;
+    transition-duration: 0.3s;
+    transition-timing-function: ease-out;
+    transition-behavior: allow-discrete;
+  }
+
+  /* Add transform transitions only for specific interactive elements that need them */
+  button, [role="button"], [tabindex]:not([tabindex="-1"]) {
+    transition-property: background-color, color, border-color, box-shadow, opacity, transform;
+  }
+
+  /* Prevent animation stacking and queuing */
+  *:hover, *:focus, *:active, *:focus-visible {
+    transition: all 0.3s ease-out !important;
+    transition-behavior: allow-discrete;
+  }
+
+  /* Reduce motion for users who prefer it */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    .theme-transitioning *,
+    button, a, input, textarea, select {
+      transition: none !important;
+      animation: none !important;
+      transition-behavior: auto;
+    }
+  }
+}
